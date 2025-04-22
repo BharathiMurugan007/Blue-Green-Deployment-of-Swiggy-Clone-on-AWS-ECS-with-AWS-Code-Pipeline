@@ -36,30 +36,28 @@ phases:
       - echo "Running tests..."
       - echo "Checking if Dockerfile exists"
       - ls -la
+      - if [ -f Dockerfile ]; then cat Dockerfile; else echo "Dockerfile not found!"; fi
       - cat Dockerfile
       - echo "Building Docker image..."
-      - echo "docker123" | docker login -u "bharathi274" --password-stdin "docker.io"
-      - docker build -t "docker.io/bharathi274/swiggy:latest" .
-      - docker push "docker.io/bharathi274/swiggy:latest"
+      - echo "docker123" | docker login -u "bharathi274" --password-stdin "$DOCKER_REGISTRY_URL"
+      - docker build -t "$DOCKER_REGISTRY_URL/bharathi274/swiggy:latest" .
+      - docker push "$DOCKER_REGISTRY_URL/bharathi274/swiggy:latest"
 
   post_build:
     commands:
       - echo "Performing Trivy image scan after building the image..."
-      - >
-      - aws ses send-email \
-          --from "jetspeed563@gmail.com" \
-          --destination "ToAddresses=bm6823196@gmail.com" \
-          --message "Subject={Data=CodeBuild Status: $CODEBUILD_BUILD_ID,Charset=utf-8},Body={Text={Data=Build status: $CODEBUILD_BUILD_STATUS,Charset=utf-8}}" \
-          --region us-east-1
-      - trivy image "docker.io/bharathi274/swiggy:latest" >> trivyimage.txt
+      - trivy image "$DOCKER_REGISTRY_URL/bharathi274/swiggy:latest" >> trivyimage.txt
       - echo "Running OWASP Dependency-Check scan..."
       - cd dependency-check/bin
       - ./dependency-check.sh --scan . --format ALL
       - echo "Build completed successfully!"
       - echo "Running SonarQube analysis result"
       - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.242.5.44:9000/ -Dsonar.login=$SONAR_TOKEN
-      - >
-        aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
+      - aws ses send-email \
+          --from "jetspeed563@gmail.com" \
+          --destination "ToAddresses=bm6823196@gmail.com" \
+          --message "Subject={Data=CodeBuild Status: $CODEBUILD_BUILD_ID,Charset=utf-8},Body={Text={Data=Build status: $CODEBUILD_BUILD_STATUS,Charset=utf-8}}" \
+          --region us-east-1
 
 artifacts:
   files:
