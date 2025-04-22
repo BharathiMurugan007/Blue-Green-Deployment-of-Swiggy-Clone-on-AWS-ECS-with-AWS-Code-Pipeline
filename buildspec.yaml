@@ -31,7 +31,6 @@ phases:
       - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
       - export SONAR_SCANNER_OPTS="-server"
 
-
  build:
   commands:
     - echo "Running tests..."
