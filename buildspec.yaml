@@ -36,25 +36,24 @@ phases:
     commands:
       - echo "Running tests..."
       - echo "Building Docker image..."
-      - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
-      - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" .
-      - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest"
+      - echo "docker123" | docker login -u "bharathi274" --password-stdin "docker.io"
+      - docker build -t "docker.io/bharathi274/swiggy:latest" .
+      - docker push "docker.io/bharathi274/swiggy:latest"
 
-  post_build:
-    commands:
-      - echo "Performing Trivy image scan after building the image..."
-      - >
-        aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
-      - trivy image "$DOCKER_REGISTRY_USERNAME/swiggy:latest" >> trivyimage.txt
-      - echo "Running OWASP Dependency-Check scan..."
-      - cd dependency-check/bin
-      - ./dependency-check.sh --scan . --format ALL
-      - echo "Build completed successfully!"
-      - echo "Running SonarQube analysis result"
-      - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.242.5.44:9000/ -Dsonar.login=sqp_c93e99374d5bda9108a76e56c476757840a1ea40
-
-      - >
-        aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
+post_build:
+  commands:
+    - echo "Performing Trivy image scan after building the image..."
+    - >
+      aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
+    - trivy image "docker.io/bharathi274/swiggy:latest" >> trivyimage.txt
+    - echo "Running OWASP Dependency-Check scan..."
+    - cd dependency-check/bin
+    - ./dependency-check.sh --scan . --format ALL
+    - echo "Build completed successfully!"
+    - echo "Running SonarQube analysis result"
+    - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.242.5.44:9000/ -Dsonar.login=sqp_c93e99374d5bda9108a76e56c476757840a1ea40
+    - >
+      aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
 
 artifacts:
   files:
