@@ -31,32 +31,31 @@ phases:
       - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
       - export SONAR_SCANNER_OPTS="-server"
 
- build:
-  commands:
-    - echo "Running tests..."
-    - echo "Checking if Dockerfile exists"
-    - ls -la
-    - cat Dockerfile
-    - echo "Building Docker image..."
-    - echo "docker123" | docker login -u "bharathi274" --password-stdin "docker.io"
-    - docker build -t "$docker.io/bharathi274/swiggy:latest" .
-    - docker push "docker.io/bharathi274/swiggy:latest"
+  build:
+    commands:
+      - echo "Running tests..."
+      - echo "Checking if Dockerfile exists"
+      - ls -la
+      - cat Dockerfile
+      - echo "Building Docker image..."
+      - echo "docker123" | docker login -u "bharathi274" --password-stdin "docker.io"
+      - docker build -t "docker.io/bharathi274/swiggy:latest" .
+      - docker push "docker.io/bharathi274/swiggy:latest"
 
-
-post_build:
-  commands:
-    - echo "Performing Trivy image scan after building the image..."
-    - >
-      aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
-    - trivy image "docker.io/bharathi274/swiggy:latest" >> trivyimage.txt
-    - echo "Running OWASP Dependency-Check scan..."
-    - cd dependency-check/bin
-    - ./dependency-check.sh --scan . --format ALL
-    - echo "Build completed successfully!"
-    - echo "Running SonarQube analysis result"
-    - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.242.5.44:9000/ -Dsonar.login=$SONAR_TOKEN
-    - >
-      aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
+  post_build:
+    commands:
+      - echo "Performing Trivy image scan after building the image..."
+      - >
+        aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
+      - trivy image "docker.io/bharathi274/swiggy:latest" >> trivyimage.txt
+      - echo "Running OWASP Dependency-Check scan..."
+      - cd dependency-check/bin
+      - ./dependency-check.sh --scan . --format ALL
+      - echo "Build completed successfully!"
+      - echo "Running SonarQube analysis result"
+      - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.242.5.44:9000/ -Dsonar.login=$SONAR_TOKEN
+      - >
+        aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
 
 artifacts:
   files:
