@@ -32,13 +32,17 @@ phases:
       - export SONAR_SCANNER_OPTS="-server"
 
 
-  build:
-    commands:
-      - echo "Running tests..."
-      - echo "Building Docker image..."
-      - echo "docker123" | docker login -u "bharathi274" --password-stdin "docker.io"
-      - docker build -t "docker.io/bharathi274/swiggy:latest" .
-      - docker push "docker.io/bharathi274/swiggy:latest"
+ build:
+  commands:
+    - echo "Running tests..."
+    - echo "Checking if Dockerfile exists"
+    - ls -la
+    - cat Dockerfile
+    - echo "Building Docker image..."
+    - echo "docker123" | docker login -u "bharathi274" --password-stdin "docker.io"
+    - docker build -t "$docker.io/bharathi274/swiggy:latest" .
+    - docker push "docker.io/bharathi274/swiggy:latest"
+
 
 post_build:
   commands:
