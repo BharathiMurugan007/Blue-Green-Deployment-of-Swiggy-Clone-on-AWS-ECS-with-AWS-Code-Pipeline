@@ -33,17 +33,26 @@ phases:
 
   build:
     commands:
-      - echo "Running tests..."
-      - echo "Checking if Dockerfile and necessary files exist..."
-      - ls -la
-      - ls -la package*.json || echo "Missing package*.json files!"
-      - cat package.json || echo "Missing package.json!"
-      - echo "Testing local build..."
-      - npm install || echo "npm install failed!"
-      - npm run build || echo "npm build failed!"
+      echo "Running tests..."
+      - echo "Building Docker image..."
       - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
       - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" .
       - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest"
+  post_build:
+    commands:
+      - echo "Performing Trivy image scan after building the image..."
+      - aws ses send-email --from "jetspeed563@gmail.com" --to "bm6823196@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1" 
+
+      - trivy image  "$DOCKER_REGISTRY_USERNAME/swiggy:latest" >> trivyimage.txt
+      - echo "Running OWASP Dependency-Check scan..."
+      - cd dependency-check/bin
+      - ./dependency-check.sh --scan . --format ALL
+      - echo "Build completed successfully!"
+      - echo "Running SonarQube analysis result"
+      - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://18.209.67.239/9000/
+      - aws ses send-email --from "madithati123@gmail.com" --to "madithatisreedhar123@gmail.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1" 
+      # Update with your preferred AWS region
+
 
   post_build:
     commands:
