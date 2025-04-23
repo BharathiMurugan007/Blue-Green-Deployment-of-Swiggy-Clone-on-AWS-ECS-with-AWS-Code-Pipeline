@@ -34,19 +34,21 @@ phases:
   build:
     commands:
       - echo "Running tests..."
-      - echo "Checking if Dockerfile exists"
+      - echo "Checking if Dockerfile and necessary files exist..."
       - ls -la
-      - if [ -f Dockerfile ]; then cat Dockerfile; else echo "Dockerfile not found!"; fi
-      - cat Dockerfile
-      - echo "Building Docker image..."
-      - echo "docker123" | docker login -u "bharathi274" --password-stdin "$DOCKER_REGISTRY_URL"
+      - ls -la package*.json || echo "Missing package*.json files!"
+      - cat package.json || echo "Missing package.json!"
+      - echo "Testing local build..."
+      - npm install || echo "npm install failed!"
+      - npm run build || echo "npm build failed!"
+      - echo "docker123" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
       - docker build -t "$DOCKER_REGISTRY_URL/bharathi274/swiggy:latest" .
       - docker push "$DOCKER_REGISTRY_URL/bharathi274/swiggy:latest"
 
   post_build:
     commands:
       - echo "Performing Trivy image scan after building the image..."
-      - trivy image "$DOCKER_REGISTRY_URL/bharathi274/swiggy:latest" >> trivyimage.txt
+      - trivy image --exit-code 0 --no-progress "$DOCKER_REGISTRY_URL/bharathi274/swiggy:latest" >> trivyimage.txt
       - echo "Running OWASP Dependency-Check scan..."
       - cd dependency-check/bin
       - ./dependency-check.sh --scan . --format ALL
@@ -58,11 +60,11 @@ phases:
           --from "jetspeed563@gmail.com" \
           --destination '{"ToAddresses":["bm6823196@gmail.com"]}' \
           --message '{
-              "Subject": {"Data": "CodeBuild Status: '$CODEBUILD_BUILD_ID'"},
-              "Body": {"Text": {"Data": "Build status: '$CODEBUILD_BUILD_STATUS'"}}
+            "Subject": {"Data": "CodeBuild Status: '$CODEBUILD_BUILD_ID'"},
+            "Body": {"Text": {"Data": "Build status: '$CODEBUILD_BUILD_STATUS'"}}
           }' \
           --region us-east-1
 
 artifacts:
-  files:
+  files: 
     - appspec.yaml
